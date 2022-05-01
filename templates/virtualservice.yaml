@@ -1,0 +1,60 @@
+{{- if .Values.istio.enabled -}}
+{{- $fullName := include "passbolt.fullname" . -}}
+{{- $host := .Values.istio.host -}}
+
+{{- if not .Values.istio.gateway.existingGateway -}}
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: {{ $fullName }}-gateway
+  namespace: istio-system
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - hosts:
+      - {{ .Values.istio.gateway.host | quote }}
+      port:
+        name: http
+        number: 80
+        protocol: HTTP
+      {{- if .Values.istio.gateway.tlsSecretName }}
+      tls:
+        httpsRedirect: true
+      {{- end -}}
+    {{- if .Values.istio.gateway.tlsSecretName }}
+    - hosts:
+      - {{ .Values.istio.gateway.host | quote }}
+      port:
+        name: https
+        number: 443
+        protocol: HTTPS
+      tls:
+        credentialName: {{ .Values.istio.gateway.tlsSecretName }}
+        mode: SIMPLE
+    {{- end }}
+{{- end }}
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ $fullName }}
+spec:
+  gateways:
+  {{- if .Values.istio.gateway.existingGateway }}
+  - {{ .Values.istio.gateway.existingGateway -}}
+  {{ else }}
+  - {{ $fullName }}-gateway/istio-system
+  {{- end }}
+  hosts:
+  - {{ $host }}
+  http:
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        host: {{ $fullName }}.passbolt.svc.cluster.local
+        port:
+          number: 80
+{{- end -}}

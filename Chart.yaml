@@ -1,0 +1,18 @@
+apiVersion: v2
+name: passbolt
+type: application
+version: 1.0.0
+appVersion: "3.5.0-ce-non-root"
+description: A Helm chart to deploy Passbolt
+home: http://passbolt.com
+sources:
+  - https://github.com/passbolt
+  - https://github.com/stevensucipto31/passbolt-chart
+maintainers:
+  - name: stevensucipto31
+    email: stevensucipto31@gmail.com
+dependencies:
+  - name: mariadb
+    version: "8.0.7"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: mariadb.enabled
